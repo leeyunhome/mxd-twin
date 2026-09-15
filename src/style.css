@@ -147,3 +147,6 @@ body { background: var(--bg); color: var(--text); overflow: hidden; }
 #event-list li.ok .lv { color: var(--ok); }
 #event-list li.warn .lv { color: var(--warn); }
 #event-list li.alarm .lv { color: var(--alarm); }
+.disclaimer a { color: #8fd0ff; text-decoration: none; }
+.disclaimer a:hover { text-decoration: underline; }
+.disclaimer strong { color: #c3cedd; }

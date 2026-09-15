@@ -1,3 +1,4 @@
 node_modules/
 .env
-*.ply
+# 학습 원본(319MB)은 저장소에 넣지 않는다. 정제본만 서빙한다.
+data/modern_office.ply

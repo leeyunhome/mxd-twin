@@ -3,9 +3,11 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { SplatMesh } from "@sparkjsdev/spark";
 import { Simulation } from "./sim.js";
 
-// 319MB라 GitHub 100MB 제한을 넘어 Hugging Face Hub(public)에 둔다.
-const SPLAT_URL =
-    "https://huggingface.co/datasets/hodulee/splatting-viewer-assets/resolve/main/modern_office.ply";
+// 학습 원본(1,350,343 splats / 319MB)은 유리 파사드 바깥으로 반사 스트릭이 길게 뻗어
+// 나갔고 로딩도 30~60초 걸렸다. 방 경계로 크롭해 272,624 splats / 64.5MB로 줄이면서
+// 스트릭이 사라지고 GitHub 100MB 제한 안에 들어와 저장소에서 직접 서빙한다.
+// 대신 유리 너머 배경(시클로라마)도 함께 잘려 창밖은 비어 보인다 — 방 안 관제가 목적이라 감수.
+const SPLAT_URL = "data/modern_office_cleaned.ply";
 
 // 학습 커버리지(고도각 8~65°, 카메라 반경 2.6)에서 유도한 시점 제약.
 // 이 범위 밖은 학습 데이터가 없어 재구성이 무너지므로 뷰어에서 막는다.
@@ -265,8 +267,8 @@ function loadSplat() {
     splat.addEventListener("error", () => {
         el("loading").textContent = "공간 모델을 불러오지 못했습니다 — 센서 레이어만 표시합니다.";
     });
-    // 319MB라 로딩이 길다. load 이벤트가 늦어도 화면이 계속 '로딩 중'으로 남지 않게 보조 타이머를 둔다.
-    setTimeout(() => { el("loading").style.display = "none"; }, 60000);
+    // load 이벤트가 늦어도 화면이 계속 '로딩 중'으로 남지 않게 보조 타이머를 둔다.
+    setTimeout(() => { el("loading").style.display = "none"; }, 20000);
 }
 
 async function main() {
