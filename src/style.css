@@ -1,0 +1,149 @@
+:root {
+    --bg: #0d1117;
+    --panel: #151c26;
+    --panel-2: #1b2430;
+    --line: #2a3543;
+    --text: #d9e1ec;
+    --muted: #8695a8;
+    --ok: #4aa08a;
+    --warn: #d8a33a;
+    --alarm: #d0503f;
+    font-family: "Segoe UI", "Malgun Gothic", system-ui, sans-serif;
+}
+
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--text); overflow: hidden; }
+
+#app {
+    display: grid;
+    grid-template-columns: 274px 1fr;
+    grid-template-rows: 54px 1fr 150px;
+    grid-template-areas: "top top" "side stage" "side log";
+    height: 100vh;
+}
+
+/* ---- 상단 ---- */
+#topbar {
+    grid-area: top; display: flex; align-items: center; justify-content: space-between;
+    padding: 0 18px; background: var(--panel); border-bottom: 1px solid var(--line);
+}
+.brand strong { font-size: 1rem; letter-spacing: .02em; }
+.brand span { color: var(--muted); font-size: .78rem; margin-left: 10px; }
+#kpis { display: flex; gap: 8px; }
+.kpi {
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 7px;
+    padding: 5px 12px; min-width: 74px; display: flex; flex-direction: column;
+}
+.kpi span { font-size: .68rem; color: var(--muted); }
+.kpi strong { font-size: .95rem; }
+.kpi.warn strong { color: var(--warn); }
+.kpi.alarm strong { color: var(--alarm); }
+
+/* ---- 좌측 ---- */
+#sidebar {
+    grid-area: side; background: var(--panel); border-right: 1px solid var(--line);
+    padding: 14px; overflow-y: auto;
+}
+#sidebar h2 {
+    font-size: .7rem; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--muted); margin: 4px 0 10px;
+}
+#sidebar h2:not(:first-child) { margin-top: 20px; }
+#system-list { list-style: none; margin: 0; padding: 0; }
+#system-list li {
+    display: flex; align-items: center; gap: 8px; padding: 7px 9px;
+    border-radius: 6px; cursor: pointer; font-size: .85rem;
+}
+#system-list li:hover { background: var(--panel-2); }
+#system-list li.active { background: var(--panel-2); box-shadow: inset 2px 0 0 currentColor; }
+#system-list li.dimmed { opacity: .38; }
+.dot { width: 9px; height: 9px; border-radius: 50%; flex: none; }
+.sys-name { flex: 1; }
+.sys-proto {
+    font-size: .64rem; padding: 1px 6px; border-radius: 4px; white-space: nowrap;
+    border: 1px solid var(--line);
+}
+.sys-proto.real { color: #8fd0ff; border-color: #35576e; }
+.sys-proto.spec { color: var(--muted); }
+.sys-bad { color: var(--alarm); font-weight: 600; font-size: .76rem; }
+
+.tag {
+    font-size: .62rem; padding: 1px 5px; border-radius: 4px; margin-left: 6px;
+    border: 1px solid var(--line);
+}
+.tag.real { color: #8fd0ff; border-color: #35576e; }
+.tag.spec { color: var(--muted); }
+
+.hint, .coverage-note { color: var(--muted); font-size: .72rem; line-height: 1.6; margin-top: 10px; }
+.disclaimer {
+    color: var(--muted); font-size: .68rem; line-height: 1.6; margin-top: 14px;
+    padding-top: 10px; border-top: 1px solid var(--line);
+}
+.view-actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.view-actions button {
+    flex: 1; background: var(--panel-2); color: var(--text); border: 1px solid var(--line);
+    border-radius: 6px; padding: 6px 8px; font-size: .78rem; cursor: pointer;
+}
+.view-actions button:hover { border-color: #3d566e; }
+.view-actions button.on { color: #8fd0ff; border-color: #3d6e8e; }
+
+/* ---- 무대 ---- */
+#stage { grid-area: stage; position: relative; overflow: hidden; }
+#stage canvas { display: block; }
+#loading {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+    color: var(--muted); font-size: .9rem; pointer-events: none;
+}
+
+#detail {
+    position: absolute; top: 14px; right: 14px; width: 310px; max-height: calc(100% - 28px);
+    overflow-y: auto; background: rgba(21, 28, 38, .95); border: 1px solid var(--line);
+    border-radius: 9px; padding: 14px 16px; backdrop-filter: blur(4px);
+}
+#detail.hidden { display: none; }
+#detail-close {
+    position: absolute; top: 8px; right: 10px; background: none; border: none;
+    color: var(--muted); font-size: 1.1rem; cursor: pointer; line-height: 1;
+}
+#detail h3 { margin: 0 0 4px; font-size: .95rem; }
+.detail-system { font-size: .72rem; color: var(--muted); margin-bottom: 10px; }
+#detail-value { font-size: 1.5rem; font-weight: 600; margin-bottom: 10px; }
+#detail-meta { margin: 0; font-size: .76rem; }
+#detail-meta div { display: flex; justify-content: space-between; gap: 10px; padding: 3px 0; border-top: 1px solid var(--line); }
+#detail-meta dt { color: var(--muted); flex: none; }
+#detail-meta dd { margin: 0; text-align: right; }
+
+/* ---- SOP ---- */
+#sop { margin-top: 14px; padding-top: 10px; border-top: 1px solid var(--line); }
+#sop.hidden { display: none; }
+.sop-head { display: flex; align-items: baseline; justify-content: space-between; }
+#sop h4 { margin: 0; font-size: .74rem; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.sop-sev { font-size: .68rem; color: var(--warn); }
+.sop-title { font-size: .82rem; margin: 6px 0 8px; }
+#sop-steps { margin: 0; padding-left: 18px; font-size: .74rem; line-height: 1.65; color: #c3cedd; }
+#sop-steps li { margin-bottom: 3px; }
+.sop-meta { margin: 10px 0 0; font-size: .7rem; }
+.sop-meta div { padding: 4px 0; border-top: 1px solid var(--line); }
+.sop-meta dt { color: var(--muted); }
+.sop-meta dd { margin: 2px 0 0; line-height: 1.5; }
+
+/* ---- 이벤트 로그 ---- */
+#eventlog {
+    grid-area: log; background: var(--panel); border-top: 1px solid var(--line);
+    padding: 10px 16px; overflow-y: auto;
+}
+#eventlog h2 {
+    font-size: .7rem; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--muted); margin: 0 0 8px;
+}
+#event-list { list-style: none; margin: 0; padding: 0; font-size: .8rem; }
+#event-list li {
+    display: grid; grid-template-columns: 74px 64px 1fr; gap: 10px;
+    padding: 4px 0; border-bottom: 1px solid rgba(42, 53, 67, .5);
+}
+#event-list li .t { color: var(--muted); font-variant-numeric: tabular-nums; }
+#event-list li .lv { font-weight: 600; }
+#event-list li.ok .lv { color: var(--ok); }
+#event-list li.warn .lv { color: var(--warn); }
+#event-list li.alarm .lv { color: var(--alarm); }

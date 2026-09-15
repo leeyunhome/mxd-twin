@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>mxd-twin — 복합단지 통합운영 플랫폼 프로토타입</title>
+<link rel="stylesheet" href="src/style.css" />
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdnjs.cloudflare.com/ajax/libs/three.js/0.178.0/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.178.0/examples/jsm/",
+    "@sparkjsdev/spark": "https://sparkjs.dev/releases/spark/0.1.10/spark.module.js"
+  }
+}
+</script>
+</head>
+<body>
+<div id="app">
+
+  <header id="topbar">
+    <div class="brand">
+      <strong>mxd-twin</strong>
+      <span>이종 계통 통합운영 플랫폼 · 3D Gaussian Splatting 공간 관제</span>
+    </div>
+    <div id="kpis">
+      <div class="kpi"><span>정상</span><strong id="kpi-ok">–</strong></div>
+      <div class="kpi warn"><span>주의</span><strong id="kpi-warn">–</strong></div>
+      <div class="kpi alarm"><span>경보</span><strong id="kpi-alarm">–</strong></div>
+      <div class="kpi"><span>재실</span><strong id="kpi-occ">–</strong></div>
+      <div class="kpi"><span>순간전력</span><strong id="kpi-power">–</strong></div>
+    </div>
+  </header>
+
+  <aside id="sidebar">
+    <h2>계통 / 수집 규격</h2>
+    <ul id="system-list"></ul>
+    <div class="hint">
+      계통을 클릭하면 해당 센서만 공간에 표시됩니다.
+      규격 배지: <span class="tag real">실무</span> 직접 다뤄본 규격 ·
+      <span class="tag spec">사양</span> 어댑터 인터페이스만 정의한 규격.
+    </div>
+
+    <h2>시점</h2>
+    <div class="view-actions">
+      <button id="btn-overview">전체 조망</button>
+      <button id="btn-autorotate">자동 회전</button>
+    </div>
+    <p class="coverage-note">시점 범위는 학습 커버리지(고도각 8~65°)로 제한됩니다.</p>
+    <p class="disclaimer">
+      공간 모델은 CC-BY 공개 3D 모델을 렌더해 학습한 것으로 실측 스캔이 아니며,
+      센서 값은 실제 설비 연동이 아닌 시뮬레이션입니다.
+    </p>
+  </aside>
+
+  <main id="stage">
+    <div id="loading">공간 모델 로딩 중… (319MB, 수십 초 걸릴 수 있습니다)</div>
+    <div id="detail" class="hidden">
+      <button id="detail-close" aria-label="닫기">×</button>
+      <h3 id="detail-title">–</h3>
+      <div id="detail-system" class="detail-system">–</div>
+      <div id="detail-value">–</div>
+      <dl id="detail-meta"></dl>
+      <div id="sop" class="hidden">
+        <div class="sop-head">
+          <h4>대응 절차 (SOP)</h4>
+          <span id="sop-sev" class="sop-sev">–</span>
+        </div>
+        <div id="sop-title" class="sop-title">–</div>
+        <ol id="sop-steps"></ol>
+        <dl class="sop-meta">
+          <div><dt>에스컬레이션</dt><dd id="sop-esc">–</dd></div>
+          <div><dt>기록</dt><dd id="sop-rec">–</dd></div>
+        </dl>
+      </div>
+    </div>
+  </main>
+
+  <section id="eventlog">
+    <h2>이벤트</h2>
+    <ul id="event-list"></ul>
+  </section>
+
+</div>
+<script type="module" src="src/app.js"></script>
+</body>
+</html>
