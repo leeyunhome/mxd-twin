@@ -84,6 +84,11 @@ export class Simulation {
                 let next = st.value + pull + noise;
                 if (this.anomaly?.id === st.id) next += this.anomaly.dir * r.jitter * 6;
                 st.value = clamp(next, r.range[0], r.range[1]);
+                // 상세 패널의 추세 미니차트용 — 게이지 대시보드(Thermal Home 등)에서 쓰던
+                // "최근 값 이력" 패턴을 그대로 가져온다. 틱 주기 2초 기준 최근 5분 = 150개.
+                if (!st.history) st.history = [];
+                st.history.push(st.value);
+                if (st.history.length > 150) st.history.shift();
             }
 
             st.prevStatus = st.status;

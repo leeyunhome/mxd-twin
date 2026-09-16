@@ -213,7 +213,85 @@ function renderDetail() {
         + `<div><dt>수집 규격</dt><dd>${sys.protocol}`
         + `<span class="tag ${sys.verified ? "real" : "spec"}">${sys.verified ? "실무" : "사양"}</span></dd></div>`
         + `<div><dt>앵커</dt><dd>${st.anchor}</dd></div>`;
+    renderTrend(st);
     renderSop(st);
+}
+
+// Node-RED 대시보드(Thermal Home/MDS Home)에서 쓰던 "게이지 + 분/시 추세" 패턴을
+// 여기서는 SVG 라이브러리 없이 Canvas로 직접 그린다 — edge-monitor와 같은 방식.
+function renderTrend(st) {
+    const box = el("detail-trend");
+    if (st.rule.discrete || !st.history || st.history.length < 2) { box.classList.add("hidden"); return; }
+    box.classList.remove("hidden");
+    drawGauge(st);
+    drawSparkline(st);
+}
+
+function drawGauge(st) {
+    const canvas = el("gaugeCanvas");
+    const ctx = canvas.getContext("2d");
+    const { width: w, height: h } = canvas;
+    ctx.clearRect(0, 0, w, h);
+    const cx = w / 2, cy = h - 12, r = Math.min(w / 2 - 8, h - 24);
+    const [lo, hi] = st.rule.range;
+    const frac = Math.max(0, Math.min(1, (st.value - lo) / (hi - lo)));
+    const start = Math.PI, end = 0; // 반원(왼쪽 180도 -> 오른쪽 0도)
+
+    ctx.lineWidth = 9;
+    ctx.lineCap = "round";
+    ctx.strokeStyle = "#2a3543";
+    ctx.beginPath(); ctx.arc(cx, cy, r, start, end, true); ctx.stroke();
+
+    const color = st.status === "alarm" ? "#d0503f" : st.status === "warn" ? "#d8a33a" : "#4aa08a";
+    ctx.strokeStyle = color;
+    ctx.beginPath(); ctx.arc(cx, cy, r, start, start - frac * Math.PI, true); ctx.stroke();
+
+    // 정상 범위 구간 표시(옅은 초록 눈금)
+    if (st.rule.warn) {
+        const [wlo, whi] = st.rule.warn;
+        const f1 = Math.max(0, Math.min(1, (wlo - lo) / (hi - lo)));
+        const f2 = Math.max(0, Math.min(1, (whi - lo) / (hi - lo)));
+        ctx.lineWidth = 3;
+        ctx.strokeStyle = "rgba(74,160,138,0.6)";
+        ctx.beginPath(); ctx.arc(cx, cy, r + 8, start - f1 * Math.PI, start - f2 * Math.PI, true); ctx.stroke();
+    }
+
+    ctx.fillStyle = "#d9e1ec";
+    ctx.font = "600 13px system-ui, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(state.sim.format(st), cx, cy - 4);
+}
+
+function drawSparkline(st) {
+    const canvas = el("trendCanvas");
+    const ctx = canvas.getContext("2d");
+    const { width: w, height: h } = canvas;
+    ctx.clearRect(0, 0, w, h);
+    const hist = st.history;
+    const [lo, hi] = st.rule.range;
+    const pad = 6;
+    const step = (w - pad * 2) / Math.max(1, hist.length - 1);
+
+    ctx.strokeStyle = "#2a3543";
+    ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.moveTo(0, h / 2); ctx.lineTo(w, h / 2); ctx.stroke();
+
+    const color = st.status === "alarm" ? "#d0503f" : st.status === "warn" ? "#d8a33a" : "#8fd0ff";
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    hist.forEach((v, i) => {
+        const x = pad + i * step;
+        const f = Math.max(0, Math.min(1, (v - lo) / (hi - lo)));
+        const y = h - pad - f * (h - pad * 2);
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    ctx.fillStyle = "#626a86";
+    ctx.font = "10px system-ui, sans-serif";
+    ctx.textAlign = "left";
+    ctx.fillText("최근 5분", 4, 10);
 }
 
 function renderSop(st) {

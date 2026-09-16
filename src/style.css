@@ -109,6 +109,9 @@ body { background: var(--bg); color: var(--text); overflow: hidden; }
 #detail h3 { margin: 0 0 4px; font-size: .95rem; }
 .detail-system { font-size: .72rem; color: var(--muted); margin-bottom: 10px; }
 #detail-value { font-size: 1.5rem; font-weight: 600; margin-bottom: 10px; }
+#detail-trend { display: flex; gap: 10px; margin-bottom: 12px; align-items: center; }
+#detail-trend.hidden { display: none; }
+#detail-trend canvas { background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; }
 #detail-meta { margin: 0; font-size: .76rem; }
 #detail-meta div { display: flex; justify-content: space-between; gap: 10px; padding: 3px 0; border-top: 1px solid var(--line); }
 #detail-meta dt { color: var(--muted); flex: none; }
