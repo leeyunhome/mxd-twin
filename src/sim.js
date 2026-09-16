@@ -7,7 +7,9 @@
 // 경보 상태에서도 수치 자체는 현실적인 값으로 남긴다.
 const RULES = {
     HVAC: { unit: "°C", base: 22.5, jitter: 0.18, range: [-5, 45], warn: [20, 26], alarm: [18, 28] },
+    HEATING: { unit: "%", base: 40, jitter: 1.6, range: [0, 100], warn: [5, 85], alarm: [2, 95] },
     LIGHTING: { unit: "lx", base: 520, jitter: 14, range: [0, 1500], warn: [280, 800], alarm: [150, 950] },
+    SHADING: { unit: "%", base: 55, jitter: 2.2, range: [0, 100], warn: null, alarm: null },
     POWER: { unit: "W", base: 1450, jitter: 55, range: [0, 6000], warn: [0, 2600], alarm: [0, 3200] },
     OCCUPANCY: { unit: "명", base: 14, jitter: 0.8, range: [0, 60], warn: [0, 34], alarm: [0, 44] },
     EV: { unit: "kW", base: 7.2, jitter: 0.35, range: [0, 22], warn: [0, 11.5], alarm: [0, 14] },

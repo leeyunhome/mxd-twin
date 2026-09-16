@@ -1,0 +1,379 @@
+{
+ "coordinate_system": "3DGS splat 좌표 (Y-up) — building-twin의 Blender Z-up 좌표를 blenderToThree 변환으로 사전 변환.",
+ "systems": {
+  "HVAC": {
+   "label": "공조",
+   "unit": "°C",
+   "color": "#3f8fd0",
+   "protocol": "Modbus TCP",
+   "verified": true,
+   "note": "실무: Node-RED 통합관제에서 Modbus Holding Register 수집"
+  },
+  "HEATING": {
+   "label": "난방",
+   "unit": "%",
+   "color": "#d4763a",
+   "protocol": "Modbus TCP",
+   "verified": true,
+   "note": "실무: 같은 Modbus 계통의 밸브 액추에이터 엔드포인트"
+  },
+  "LIGHTING": {
+   "label": "조명",
+   "unit": "lx",
+   "color": "#d8b23a",
+   "protocol": "BACnet/IP",
+   "verified": false,
+   "note": "사양 설계 수준 — 어댑터 인터페이스만 정의"
+  },
+  "SHADING": {
+   "label": "블라인드",
+   "unit": "%",
+   "color": "#7d9a5a",
+   "protocol": "BACnet/IP",
+   "verified": false,
+   "note": "사양 설계 수준 — 어댑터 인터페이스만 정의"
+  },
+  "FIRE": {
+   "label": "소방",
+   "unit": "",
+   "color": "#c0392b",
+   "protocol": "접점(DI)",
+   "verified": true,
+   "note": "실무: 화재감지 연동 통합관제 화면 개발"
+  },
+  "SECURITY": {
+   "label": "보안",
+   "unit": "",
+   "color": "#8e6fb8",
+   "protocol": "RTSP + 접점(DI)",
+   "verified": true,
+   "note": "실무: RTSP 스트리밍 통합관제 화면 자체 개발"
+  },
+  "POWER": {
+   "label": "전력",
+   "unit": "W",
+   "color": "#4aa08a",
+   "protocol": "Modbus TCP",
+   "verified": true,
+   "note": "실무: Modbus 계측값 수집·대시보드 시각화"
+  },
+  "OCCUPANCY": {
+   "label": "재실",
+   "unit": "명",
+   "color": "#5b7fa6",
+   "protocol": "MQTT",
+   "verified": false,
+   "note": "사양 설계 수준"
+  }
+ },
+ "sensors": [
+  {
+   "id": "HVAC-01",
+   "system": "HVAC",
+   "kind": "급배기 온도·풍량",
+   "anchor": "ceilingAirVent",
+   "position": [
+    -1.251,
+    2.882,
+    -2.267
+   ]
+  },
+  {
+   "id": "HVAC-02",
+   "system": "HVAC",
+   "kind": "급배기 온도·풍량",
+   "anchor": "ceilingAirVent.001",
+   "position": [
+    2.648,
+    2.885,
+    1.705
+   ]
+  },
+  {
+   "id": "HVAC-03",
+   "system": "HVAC",
+   "kind": "급배기 온도·풍량",
+   "anchor": "ceilingAirVent.002",
+   "position": [
+    -1.262,
+    2.885,
+    1.705
+   ]
+  },
+  {
+   "id": "HVAC-04",
+   "system": "HVAC",
+   "kind": "급배기 온도·풍량",
+   "anchor": "ceilingAirVent.003",
+   "position": [
+    0.685,
+    2.885,
+    -0.415
+   ]
+  },
+  {
+   "id": "HVAC-05",
+   "system": "HVAC",
+   "kind": "급배기 온도·풍량",
+   "anchor": "ceilingAirVent.004",
+   "position": [
+    2.648,
+    2.885,
+    -2.267
+   ]
+  },
+  {
+   "id": "HVAC-06",
+   "system": "HVAC",
+   "kind": "급배기 온도·풍량",
+   "anchor": "ceilingAirVent.005",
+   "position": [
+    0.685,
+    2.885,
+    3.707
+   ]
+  },
+  {
+   "id": "HEATING-01",
+   "system": "HEATING",
+   "kind": "라디에이터 밸브",
+   "anchor": "radiateur",
+   "position": [
+    3.428,
+    0.45,
+    2.725
+   ]
+  },
+  {
+   "id": "HEATING-02",
+   "system": "HEATING",
+   "kind": "라디에이터 밸브",
+   "anchor": "radiateur.001",
+   "position": [
+    3.428,
+    0.45,
+    0.787
+   ]
+  },
+  {
+   "id": "HEATING-03",
+   "system": "HEATING",
+   "kind": "라디에이터 밸브",
+   "anchor": "radiateur.002",
+   "position": [
+    3.428,
+    0.45,
+    -1.074
+   ]
+  },
+  {
+   "id": "LIGHTING-01",
+   "system": "LIGHTING",
+   "kind": "조명 제어·조도",
+   "anchor": "ceilingLamp",
+   "position": [
+    1.993,
+    2.679,
+    2.73
+   ]
+  },
+  {
+   "id": "LIGHTING-02",
+   "system": "LIGHTING",
+   "kind": "조명 제어·조도",
+   "anchor": "ceilingLamp.001",
+   "position": [
+    -0.598,
+    2.679,
+    2.73
+   ]
+  },
+  {
+   "id": "LIGHTING-03",
+   "system": "LIGHTING",
+   "kind": "조명 제어·조도",
+   "anchor": "ceilingLamp.002",
+   "position": [
+    -0.598,
+    2.679,
+    0.668
+   ]
+  },
+  {
+   "id": "LIGHTING-04",
+   "system": "LIGHTING",
+   "kind": "조명 제어·조도",
+   "anchor": "ceilingLamp.003",
+   "position": [
+    1.993,
+    2.679,
+    0.668
+   ]
+  },
+  {
+   "id": "LIGHTING-05",
+   "system": "LIGHTING",
+   "kind": "조명 제어·조도",
+   "anchor": "ceilingLamp.004",
+   "position": [
+    1.993,
+    2.679,
+    -1.414
+   ]
+  },
+  {
+   "id": "LIGHTING-06",
+   "system": "LIGHTING",
+   "kind": "조명 제어·조도",
+   "anchor": "ceilingLamp.005",
+   "position": [
+    -0.598,
+    2.679,
+    -1.414
+   ]
+  },
+  {
+   "id": "SHADING-01",
+   "system": "SHADING",
+   "kind": "블라인드 개폐",
+   "anchor": "store_UpDown",
+   "position": [
+    3.504,
+    1.053,
+    -2.836
+   ]
+  },
+  {
+   "id": "SECURITY-01",
+   "system": "SECURITY",
+   "kind": "출입 리더·도어컨택",
+   "anchor": "porte",
+   "position": [
+    -2.277,
+    1.103,
+    -1.99
+   ]
+  },
+  {
+   "id": "SECURITY-02",
+   "system": "SECURITY",
+   "kind": "출입 리더·도어컨택",
+   "anchor": "porte.001",
+   "position": [
+    -2.284,
+    1.103,
+    3.785
+   ]
+  },
+  {
+   "id": "POWER-01",
+   "system": "POWER",
+   "kind": "콘센트 전력",
+   "anchor": "wallPlug",
+   "position": [
+    -0.565,
+    0.411,
+    4.58
+   ]
+  },
+  {
+   "id": "POWER-02",
+   "system": "POWER",
+   "kind": "콘센트 전력",
+   "anchor": "wallPlug.001",
+   "position": [
+    0.469,
+    0.5,
+    -3.264
+   ]
+  },
+  {
+   "id": "POWER-03",
+   "system": "POWER",
+   "kind": "콘센트 전력",
+   "anchor": "wallPlug.002",
+   "position": [
+    1.78,
+    0.411,
+    4.58
+   ]
+  },
+  {
+   "id": "POWER-04",
+   "system": "POWER",
+   "kind": "조명 스위치",
+   "anchor": "wallSwitch",
+   "position": [
+    -2.432,
+    1.326,
+    -1.114
+   ]
+  },
+  {
+   "id": "FIRE-01",
+   "system": "FIRE",
+   "kind": "화재감지기",
+   "anchor": "ceiling grid",
+   "position": [
+    -3.592,
+    2.9,
+    2.952
+   ]
+  },
+  {
+   "id": "FIRE-02",
+   "system": "FIRE",
+   "kind": "화재감지기",
+   "anchor": "ceiling grid",
+   "position": [
+    -3.592,
+    2.9,
+    -1.732
+   ]
+  },
+  {
+   "id": "FIRE-03",
+   "system": "FIRE",
+   "kind": "화재감지기",
+   "anchor": "ceiling grid",
+   "position": [
+    1.684,
+    2.9,
+    2.952
+   ]
+  },
+  {
+   "id": "FIRE-04",
+   "system": "FIRE",
+   "kind": "화재감지기",
+   "anchor": "ceiling grid",
+   "position": [
+    1.684,
+    2.9,
+    -1.732
+   ]
+  },
+  {
+   "id": "OCCUPANCY-01",
+   "system": "OCCUPANCY",
+   "kind": "재실 감지 (좌석 20석)",
+   "anchor": "chair cluster",
+   "position": [
+    0.787,
+    2.9,
+    1.769
+   ]
+  },
+  {
+   "id": "OCCUPANCY-02",
+   "system": "OCCUPANCY",
+   "kind": "교탁부 재실",
+   "anchor": "teacherDesk",
+   "position": [
+    2.292,
+    2.9,
+    -1.537
+   ]
+  }
+ ]
+}

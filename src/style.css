@@ -18,8 +18,8 @@ body { background: var(--bg); color: var(--text); overflow: hidden; }
 #app {
     display: grid;
     grid-template-columns: 274px 1fr;
-    grid-template-rows: 54px 1fr 150px;
-    grid-template-areas: "top top" "side stage" "side log";
+    grid-template-rows: 54px 30px 1fr 150px;
+    grid-template-areas: "top top" "pipe pipe" "side stage" "side log";
     height: 100vh;
 }
 
@@ -39,6 +39,30 @@ body { background: var(--bg); color: var(--text); overflow: hidden; }
 .kpi strong { font-size: .95rem; }
 .kpi.warn strong { color: var(--warn); }
 .kpi.alarm strong { color: var(--alarm); }
+
+/* ---- 파이프라인 바 ---- */
+#pipeline {
+    grid-area: pipe; display: flex; align-items: center; gap: 6px;
+    padding: 0 18px; background: var(--bg); border-bottom: 1px solid var(--line);
+    font-size: .68rem; white-space: nowrap; overflow-x: auto;
+}
+.pl-step {
+    background: var(--panel-2); border: 1px solid var(--line); border-radius: 999px;
+    padding: 3px 10px; color: var(--muted);
+}
+.pl-step.pl-hl { color: #8fd0ff; border-color: #35576e; }
+.pl-arr { color: var(--muted); }
+.pl-note { color: var(--muted); margin-left: 8px; font-style: italic; }
+
+/* ---- 공간 탭 ---- */
+#space-tabs { display: flex; gap: 6px; }
+#space-tabs button {
+    flex: 1; background: var(--panel-2); color: var(--text); border: 1px solid var(--line);
+    border-radius: 6px; padding: 6px 4px; font-size: .78rem; cursor: pointer;
+}
+#space-tabs button:hover { border-color: #3d566e; }
+#space-tabs button.active { color: #8fd0ff; border-color: #3d6e8e; background: #1b2c3a; }
+.space-note { color: var(--muted); font-size: .68rem; line-height: 1.5; margin: 8px 0 0; }
 
 /* ---- 좌측 ---- */
 #sidebar {

@@ -3,23 +3,49 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { SplatMesh } from "@sparkjsdev/spark";
 import { Simulation } from "./sim.js";
 
-// 학습 원본(1,350,343 splats / 319MB)은 유리 파사드 바깥으로 반사 스트릭이 길게 뻗어
-// 나갔고 로딩도 30~60초 걸렸다. 방 경계로 크롭해 272,624 splats / 64.5MB로 줄이면서
-// 스트릭이 사라지고 GitHub 100MB 제한 안에 들어와 저장소에서 직접 서빙한다.
-// 대신 유리 너머 배경(시클로라마)도 함께 잘려 창밖은 비어 보인다 — 방 안 관제가 목적이라 감수.
-const SPLAT_URL = "data/modern_office_cleaned.ply";
-
-// 학습 커버리지(고도각 8~65°, 카메라 반경 2.6)에서 유도한 시점 제약.
-// 이 범위 밖은 학습 데이터가 없어 재구성이 무너지므로 뷰어에서 막는다.
-const COVERAGE = { elevMin: 8, elevMax: 65, distMin: 1.6, distMax: 7.0 };
-
-// 센서 좌표는 splat 좌표계(Y-up)로 직접 정의돼 있어 축 변환이 필요 없다.
-const ROOM_CENTER = new THREE.Vector3(1.1, 0.1, -1.0);
+// 세 공간 모두 같은 파이프라인(카메라 포즈 설계 -> pyrender/Blender 렌더 -> 3DGS 학습,
+// COLMAP 불필요)으로 만들었지만, 공간 성격이 달라 학습 커버리지·씬 좌표·앵커링 방식이
+// 매번 달랐다(splatting-viewer 프로젝트 페이지에 그 경위를 정리해뒀다). 여기서는 그 결과물
+// 3개를 하나의 관제 UI로 전환해가며 보여준다.
+const SPACES = {
+    office: {
+        label: "오피스", key: "office",
+        splatUrl: "data/modern_office_cleaned.ply",
+        sensorsUrl: "data/spaces/office.sensors.json",
+        invertY: false,
+        roomCenter: [1.1, 0.1, -1.0],
+        cameraOffset: [2.6, 1.5, 2.2],
+        coverage: { elevMin: 8, elevMax: 65, distMin: 1.6, distMax: 7.0 },
+        note: "CC-BY 공개 3D 모델(Sketchfab, dylanheyes)을 렌더해 학습. 반사 스트릭 제거를 위해 공간 경계로 크롭.",
+    },
+    classroom: {
+        label: "교실", key: "classroom",
+        splatUrl: "data/classroom.ply",
+        sensorsUrl: "data/spaces/classroom.sensors.json",
+        invertY: false,
+        // building-twin의 Blender 좌표(-0.58,-0.676,1.549)를 blenderToThree 변환한 값과 동일.
+        roomCenter: [-0.58, 1.549, 0.676],
+        cameraOffset: [9, 11, 9],
+        coverage: { elevMin: 45, elevMax: 85, distMin: 9, distMax: 34 },
+        note: "CC0 공개 모델(Blender Classroom)을 렌더해 학습. building-twin과 같은 학습 결과물.",
+    },
+    plant_room: {
+        label: "기계실", key: "plant_room",
+        splatUrl: "data/plant_room.ply",
+        sensorsUrl: "data/spaces/plant_room.sensors.json",
+        invertY: false,
+        roomCenter: [0, 0, 0],
+        cameraOffset: [0.28, 0.12, 0.28],
+        coverage: { elevMin: -35, elevMax: 45, distMin: 0.15, distMax: 1.4 },
+        note: "CC-BY 공개 모델(Sketchfab, geppettomaster)을 렌더해 학습. 밀폐된 방이라 궤도 반지름을 방 안쪽으로 줄여 촬영.",
+    },
+};
+const SOP_URL = "data/spaces/shared.sop.json";
 
 const state = {
     sensors: [], systems: {}, sop: {}, sim: null,
     markers: new Map(), filter: null, selected: null,
-    autoRotate: false,
+    autoRotate: false, space: null,
 };
 
 const el = (id) => document.getElementById(id);
@@ -37,16 +63,14 @@ el("stage").appendChild(renderer.domElement);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.06;
-controls.minPolarAngle = THREE.MathUtils.degToRad(90 - COVERAGE.elevMax);
-controls.maxPolarAngle = THREE.MathUtils.degToRad(90 - COVERAGE.elevMin);
-controls.minDistance = COVERAGE.distMin;
-controls.maxDistance = COVERAGE.distMax;
 
 const content = new THREE.Group();
 scene.add(content);
 
 const markerGroup = new THREE.Group();
 content.add(markerGroup);
+
+let currentSplat = null;
 
 function resize() {
     const { clientWidth: w, clientHeight: h } = el("stage");
@@ -77,6 +101,11 @@ function pinTexture(color, ring) {
 
 const RING = { ok: "rgba(255,255,255,.55)", warn: "#ffd479", alarm: "#ff6b57" };
 const MARKER_SIZE = 0.11;
+
+function clearMarkers() {
+    for (const sprite of state.markers.values()) markerGroup.remove(sprite);
+    state.markers.clear();
+}
 
 function buildMarkers() {
     for (const s of state.sensors) {
@@ -112,10 +141,10 @@ function refreshMarkers(states) {
 /* ---------------- 카메라 이동 ---------------- */
 
 let flight = null;
-function flyTo(targetWorld, keepDistance = true) {
+function flyTo(targetWorld, keepDistance = true, fallbackDist = 3.4) {
     const from = camera.position.clone();
     const dir = from.clone().sub(controls.target).normalize();
-    const dist = keepDistance ? from.distanceTo(controls.target) : 3.4;
+    const dist = keepDistance ? from.distanceTo(controls.target) : fallbackDist;
     flight = {
         t: 0,
         fromTarget: controls.target.clone(), toTarget: targetWorld.clone(),
@@ -235,7 +264,7 @@ function drawGauge(st) {
     const cx = w / 2, cy = h - 12, r = Math.min(w / 2 - 8, h - 24);
     const [lo, hi] = st.rule.range;
     const frac = Math.max(0, Math.min(1, (st.value - lo) / (hi - lo)));
-    const start = Math.PI, end = 0; // 반원(왼쪽 180도 -> 오른쪽 0도)
+    const start = Math.PI, end = 0;
 
     ctx.lineWidth = 9;
     ctx.lineCap = "round";
@@ -246,7 +275,6 @@ function drawGauge(st) {
     ctx.strokeStyle = color;
     ctx.beginPath(); ctx.arc(cx, cy, r, start, start - frac * Math.PI, true); ctx.stroke();
 
-    // 정상 범위 구간 표시(옅은 초록 눈금)
     if (st.rule.warn) {
         const [wlo, whi] = st.rule.warn;
         const f1 = Math.max(0, Math.min(1, (wlo - lo) / (hi - lo)));
@@ -312,9 +340,9 @@ function renderKpis(states) {
     el("kpi-warn").textContent = count("warn");
     el("kpi-alarm").textContent = count("alarm");
     const occ = states.filter((s) => s.system === "OCCUPANCY").reduce((a, s) => a + s.value, 0);
-    el("kpi-occ").textContent = `${Math.round(occ)}명`;
+    el("kpi-occ").textContent = occ ? `${Math.round(occ)}명` : "–";
     const power = states.filter((s) => s.system === "POWER").reduce((a, s) => a + s.value, 0);
-    el("kpi-power").textContent = `${(power / 1000).toFixed(2)}kW`;
+    el("kpi-power").textContent = power ? `${(power / 1000).toFixed(2)}kW` : "–";
 
     for (const key of Object.keys(state.systems)) {
         const bad = states.filter((s) => s.system === key && s.status !== "ok").length;
@@ -336,36 +364,56 @@ function pushEvent(level, text) {
     while (list.children.length > 60) list.lastChild.remove();
 }
 
-/* ---------------- 기동 ---------------- */
+/* ---------------- 공간 전환 ---------------- */
 
-function loadSplat() {
-    const splat = new SplatMesh({ url: SPLAT_URL });
+let tickTimer = null;
+
+function loadSplat(space) {
+    if (currentSplat) {
+        content.remove(currentSplat);
+        currentSplat = null;
+    }
+    el("loading").style.display = "flex";
+    el("loading").textContent = "공간 모델 로딩 중…";
+    const splat = new SplatMesh({ url: space.splatUrl });
+    splat.rotation.x = space.invertY ? Math.PI : 0;
     content.add(splat);
+    currentSplat = splat;
     splat.addEventListener("load", () => { el("loading").style.display = "none"; });
     splat.addEventListener("error", () => {
         el("loading").textContent = "공간 모델을 불러오지 못했습니다 — 센서 레이어만 표시합니다.";
     });
-    // load 이벤트가 늦어도 화면이 계속 '로딩 중'으로 남지 않게 보조 타이머를 둔다.
     setTimeout(() => { el("loading").style.display = "none"; }, 20000);
 }
 
-async function main() {
-    const [data, sopDoc] = await Promise.all([
-        (await fetch("data/sensors.json")).json(),
-        (await fetch("data/sop.json")).json(),
-    ]);
+async function loadSpace(key) {
+    const space = SPACES[key];
+    state.space = key;
+
+    deselect();
+    state.filter = null;
+    clearMarkers();
+    el("event-list").innerHTML = "";
+    if (tickTimer) clearInterval(tickTimer);
+
+    const data = await (await fetch(space.sensorsUrl)).json();
     state.sensors = data.sensors;
     state.systems = data.systems;
-    state.sop = sopDoc.sop;
     state.sim = new Simulation(state.sensors, state.systems);
 
     buildMarkers();
     renderSystemList();
 
-    controls.target.copy(ROOM_CENTER);
-    camera.position.copy(ROOM_CENTER.clone().add(new THREE.Vector3(2.6, 1.5, 2.2)));
-    resize();
-    loadSplat();
+    const roomCenter = new THREE.Vector3(...space.roomCenter);
+    controls.target.copy(roomCenter);
+    camera.position.copy(roomCenter.clone().add(new THREE.Vector3(...space.cameraOffset)));
+    controls.minPolarAngle = THREE.MathUtils.degToRad(90 - space.coverage.elevMax);
+    controls.maxPolarAngle = THREE.MathUtils.degToRad(90 - space.coverage.elevMin);
+    controls.minDistance = space.coverage.distMin;
+    controls.maxDistance = space.coverage.distMax;
+    controls.update();
+
+    loadSplat(space);
 
     state.sim.onEvent((ev) => {
         const sys = state.systems[ev.sensor.system].label;
@@ -378,24 +426,43 @@ async function main() {
     });
 
     let states = state.sim.tick();
-    setInterval(() => {
+    renderKpis(states);
+    tickTimer = setInterval(() => {
         states = state.sim.tick();
         renderKpis(states);
         if (state.selected) renderDetail();
     }, 2000);
-    renderKpis(states);
 
-    el("btn-overview").addEventListener("click", () => {
-        state.filter = null;
-        [...el("system-list").children].forEach((c) => c.classList.remove("active", "dimmed"));
-        deselect();
-        flyTo(ROOM_CENTER, false);
-    });
-    el("btn-autorotate").addEventListener("click", (e) => {
-        state.autoRotate = !state.autoRotate;
-        e.currentTarget.classList.toggle("on", state.autoRotate);
-    });
-    el("detail-close").addEventListener("click", deselect);
+    for (const btn of document.querySelectorAll("#space-tabs button")) {
+        btn.classList.toggle("active", btn.dataset.space === key);
+    }
+    el("space-note").textContent = space.note;
+    el("coverage-note").textContent =
+        `시점 범위는 학습 커버리지(고도각 ${space.coverage.elevMin}~${space.coverage.elevMax}°)로 제한됩니다.`;
+}
+
+el("btn-overview").addEventListener("click", () => {
+    state.filter = null;
+    [...el("system-list").children].forEach((c) => c.classList.remove("active", "dimmed"));
+    deselect();
+    flyTo(new THREE.Vector3(...SPACES[state.space].roomCenter), false);
+});
+el("btn-autorotate").addEventListener("click", (e) => {
+    state.autoRotate = !state.autoRotate;
+    e.currentTarget.classList.toggle("on", state.autoRotate);
+});
+el("detail-close").addEventListener("click", deselect);
+
+for (const btn of document.querySelectorAll("#space-tabs button")) {
+    btn.addEventListener("click", () => loadSpace(btn.dataset.space));
+}
+
+async function main() {
+    const sopDoc = await (await fetch(SOP_URL)).json();
+    state.sop = sopDoc.sop;
+
+    resize();
+    await loadSpace("office");
 
     const clock = new THREE.Clock();
     renderer.setAnimationLoop(() => {
@@ -406,7 +473,7 @@ async function main() {
             off.applyAxisAngle(new THREE.Vector3(0, 1, 0), dt * 0.16);
             camera.position.copy(controls.target.clone().add(off));
         }
-        refreshMarkers([...state.sim.states.values()]);
+        if (state.sim) refreshMarkers([...state.sim.states.values()]);
         controls.update();
         renderer.render(scene, camera);
     });

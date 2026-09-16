@@ -32,7 +32,24 @@
     </div>
   </header>
 
+  <div id="pipeline">
+    <span class="pl-step">3D 모델 선정</span><span class="pl-arr">→</span>
+    <span class="pl-step">카메라 포즈 설계·렌더</span><span class="pl-arr">→</span>
+    <span class="pl-step">3DGS 학습</span><span class="pl-arr">→</span>
+    <span class="pl-step">정제(공간·부유물)</span><span class="pl-arr">→</span>
+    <span class="pl-step pl-hl">센서 배치·통합관제</span>
+    <span class="pl-note">— 같은 파이프라인, 세 공간에 적용 (아래 탭으로 전환)</span>
+  </div>
+
   <aside id="sidebar">
+    <h2>공간</h2>
+    <div id="space-tabs">
+      <button data-space="office" class="active">오피스</button>
+      <button data-space="classroom">교실</button>
+      <button data-space="plant_room">기계실</button>
+    </div>
+    <p id="space-note" class="space-note"></p>
+
     <h2>계통 / 수집 규격</h2>
     <ul id="system-list"></ul>
     <div class="hint">
@@ -46,7 +63,7 @@
       <button id="btn-overview">전체 조망</button>
       <button id="btn-autorotate">자동 회전</button>
     </div>
-    <p class="coverage-note">시점 범위는 학습 커버리지(고도각 8~65°)로 제한됩니다.</p>
+    <p id="coverage-note" class="coverage-note">–</p>
     <p class="disclaimer">
       <strong>이 데모의 목적</strong><br>
       최종 운영 화면을 먼저 만들어보고, 거기서 역산해 설계·사양 단계에 필요한 요구사항
