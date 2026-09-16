@@ -25,7 +25,10 @@ const SPACES = {
         invertY: false,
         // building-twin의 Blender 좌표(-0.58,-0.676,1.549)를 blenderToThree 변환한 값과 동일.
         roomCenter: [-0.58, 1.549, 0.676],
-        cameraOffset: [9, 11, 9],
+        // splatting-viewer에서 검증한 "돌하우스" 각도(고도각 55°, 방위각 35°, 거리 16)를 그대로
+        // 구면좌표로 계산. 이전 값(9,11,9)은 고도각이 약 41°로 커버리지 상한(45°) 밖이라
+        // OrbitControls가 첫 update()에서 강제로 재투영해 화면이 비스듬히 틀어져 보였다.
+        cameraOffset: [5.27, 13.1, 7.52],
         coverage: { elevMin: 45, elevMax: 85, distMin: 9, distMax: 34 },
         note: "CC0 공개 모델(Blender Classroom)을 렌더해 학습. building-twin과 같은 학습 결과물.",
     },
@@ -34,8 +37,10 @@ const SPACES = {
         splatUrl: "data/plant_room.ply",
         sensorsUrl: "data/spaces/plant_room.sensors.json",
         invertY: false,
-        roomCenter: [0, 0, 0],
-        cameraOffset: [0.28, 0.12, 0.28],
+        // 방 전체 중심이 아니라 배관이 몰린 클러스터 중심(HVAC 센서 3개의 중심)으로 기본
+        // 시점을 잡는다 — "전체 조망"이 아니라 처음부터 배관이 선명히 보이는 프레이밍.
+        roomCenter: [0.6, 0.07, 0.27],
+        cameraOffset: [0.32, 0.15, 0.32],
         coverage: { elevMin: -35, elevMax: 45, distMin: 0.15, distMax: 1.4 },
         note: "CC-BY 공개 모델(Sketchfab, geppettomaster)을 렌더해 학습. 밀폐된 방이라 궤도 반지름을 방 안쪽으로 줄여 촬영.",
     },
@@ -445,7 +450,9 @@ el("btn-overview").addEventListener("click", () => {
     state.filter = null;
     [...el("system-list").children].forEach((c) => c.classList.remove("active", "dimmed"));
     deselect();
-    flyTo(new THREE.Vector3(...SPACES[state.space].roomCenter), false);
+    const space = SPACES[state.space];
+    const overviewDist = new THREE.Vector3(...space.cameraOffset).length();
+    flyTo(new THREE.Vector3(...space.roomCenter), false, overviewDist);
 });
 el("btn-autorotate").addEventListener("click", (e) => {
     state.autoRotate = !state.autoRotate;
