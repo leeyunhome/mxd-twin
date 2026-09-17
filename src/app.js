@@ -23,6 +23,11 @@ const SPACES = {
         splatUrl: "data/classroom.ply",
         sensorsUrl: "data/spaces/classroom.sensors.json",
         invertY: false,
+        // building-twin은 이 splat을 Blender Z-up 그대로 두고 부모 그룹 전체를
+        // rotation.x=-PI/2로 돌려 Y-up으로 맞춘다. mxd-twin은 센서 좌표는 데이터
+        // 생성 시점에 미리 변환해뒀지만(blenderToThree) splat 자체는 그대로였어서
+        // 천장/바닥이 뒤집힌 채로 보였다 — 여기서 splat에만 같은 회전을 건다.
+        upAxisFixX: -Math.PI / 2,
         // building-twin의 Blender 좌표(-0.58,-0.676,1.549)를 blenderToThree 변환한 값과 동일.
         roomCenter: [-0.58, 1.549, 0.676],
         // splatting-viewer에서 검증한 "돌하우스" 각도(고도각 55°, 방위각 35°, 거리 16)를 그대로
@@ -381,7 +386,7 @@ function loadSplat(space) {
     el("loading").style.display = "flex";
     el("loading").textContent = "공간 모델 로딩 중…";
     const splat = new SplatMesh({ url: space.splatUrl });
-    splat.rotation.x = space.invertY ? Math.PI : 0;
+    splat.rotation.x = (space.invertY ? Math.PI : 0) + (space.upAxisFixX || 0);
     content.add(splat);
     currentSplat = splat;
     splat.addEventListener("load", () => { el("loading").style.display = "none"; });
