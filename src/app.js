@@ -42,11 +42,16 @@ const SPACES = {
         splatUrl: "data/plant_room.ply",
         sensorsUrl: "data/spaces/plant_room.sensors.json",
         invertY: false,
-        // 방 전체 중심이 아니라 배관이 몰린 클러스터 중심(HVAC 센서 3개의 중심)으로 기본
-        // 시점을 잡는다 — "전체 조망"이 아니라 처음부터 배관이 선명히 보이는 프레이밍.
-        roomCenter: [0.6, 0.07, 0.27],
-        cameraOffset: [0.32, 0.15, 0.32],
+        // 배관 클러스터 중심을 기본 시점으로 썼더니 카메라가 개별 센서 마커에 거의
+        // 닿을 만큼 가까워져 화면이 흐릿해졌다(마커 스프라이트가 화면을 뒤덮음).
+        // 학습 스크립트 검증 단계(render_plant_room.py 테스트 렌더, el=0 az=45,
+        // 반지름 0.3~0.6)에서 이미 확인한 정규화 원점 기준 각도로 되돌린다.
+        roomCenter: [0, 0, 0],
+        cameraOffset: [0.32, 0.05, 0.32],
         coverage: { elevMin: -35, elevMax: 45, distMin: 0.15, distMax: 1.4 },
+        // 다른 공간은 정규화 안 된 원본 스케일(반경 2~17)이라 마커 0.11이 작게 보이지만,
+        // 이 공간은 학습 시 카메라 반지름 자체가 0.35라 같은 절대 크기가 상대적으로 커 보인다.
+        markerScale: 0.35,
         note: "CC-BY 공개 모델(Sketchfab, geppettomaster)을 렌더해 학습. 밀폐된 방이라 궤도 반지름을 방 안쪽으로 줄여 촬영.",
     },
 };
@@ -125,7 +130,7 @@ function buildMarkers() {
         });
         const sprite = new THREE.Sprite(mat);
         sprite.position.set(...s.position);
-        sprite.scale.setScalar(MARKER_SIZE);
+        sprite.scale.setScalar(MARKER_SIZE * (SPACES[state.space].markerScale ?? 1));
         sprite.renderOrder = 10;
         sprite.userData.id = s.id;
         markerGroup.add(sprite);
@@ -144,7 +149,8 @@ function refreshMarkers(states) {
         const pulse = st.status === "alarm" ? 1 + Math.sin(t * 6) * 0.22
             : st.status === "warn" ? 1 + Math.sin(t * 3) * 0.1 : 1;
         const chosen = state.selected === st.id ? 1.45 : 1;
-        sprite.scale.setScalar(MARKER_SIZE * pulse * chosen);
+        const scale = SPACES[state.space].markerScale ?? 1;
+        sprite.scale.setScalar(MARKER_SIZE * scale * pulse * chosen);
     }
 }
 
